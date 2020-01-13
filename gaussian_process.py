@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import math
 
 class DataSet:
-
     def __init__(self, xmin, xmax, num_data, noise_level):
         self.xmin = xmin
         self.xmax = xmax
@@ -31,22 +30,21 @@ class DataSet:
         plt.scatter(self.x, self.y)
         plt.show()
 
-def generate_data():
+def generate_data(noise_level):
     def func(x):
-        return 1.0/2.0*x**(1.2) + np.cos(x)
+        return 1.0/2.0*x**(1.2) + np.cos(x) + np.random.normal(0, noise_level)
     
-    x = np.arange(0,4,step=0.01)
-    y = func(x)
+    x = np.linspace(0,4,num=1000) + np.random.rand(1000)
+    y = func(x) 
 
     # x = x[:,np.newaxis]
     # y = y[:,np.newaxis]
 
-    x_train, x_test, y_train, y_test = train_test_split(x,y,train_size=0.1)
+    x_train, x_test, y_train, y_test = train_test_split(x,y,train_size=0.05)
 
     index = np.argsort(x_train)
     x_train = x_train[index]
     y_train = y_train[index]
-    print(x_train)
 
     index = np.argsort(x_test)[::-1]
     x_test = x_test[index]

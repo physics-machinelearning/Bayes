@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.stats import gamma
 
 class MetropolisHastings:
     def __init__(self, epsilon, theta, NMCS, f):
@@ -35,44 +34,75 @@ class MetropolisHastings:
         ax2 = ax1.twinx()
         ax2.plot(theta, self.f(theta))
         plt.show()
+
+class MultidimentionalMetropolisHastings:
+    def __init__(self, epsilon, theta, NMCS, f):
+        self.epsilon = epsilon
+        self.theta = theta
+        self.NMCS = NMCS
+        self.f = f
+
+    def judgeacceptornot(self, theta, new_theta):
+        judge = self.f(new_theta) > self.f(theta)
+        r = self.f(new_theta) / self.f(theta)
+        return judge, r
+
+    def loop(self):
+        theta = self.theta
+        self.theta_list = np.empty(1, theta.shape[0])
+        self.theta_list[0] = theta
+        for i in range(self.NMCS):
+            theta_new = theta + self.epsilon*np.random.randn(theta.shape[0])
+            judge, r = self.judgeacceptornot(theta, theta_new)
+            if judge:
+                theta = theta_new
+            else:
+                if np.random.rand() < r:
+                    theta = theta_new
+
+            self.theta_list = np.vstack((self.theta_list, theta))
     
-def generate_gm(mu_list, sigma):
-    def gauss(x):
-        return 1.0/(2.0*np.pi)**0.5*np.exp(-0.5*x**2)
-    def gm(x):
-        x = np.array(x)
-        ratio = np.array([1/len(mu_list)]*len(mu_list))
-        gauss_list = [gauss(x-mu) for mu in mu_list]
-        gauss_list = np.array(gauss_list)
-        return np.dot(ratio, gauss_list)
-    return gm
+    def plot(self):
+        theta = np.linspace(min(self.theta_list), max(self.theta_list), num=100)
+        fig, ax1 = plt.subplots()
+        ax1.hist(self.theta_list, density=True, bins=40)
+        ax2 = ax1.twinx()
+        ax2.plot(theta, self.f(theta))
+        plt.show()
 
 class ReplicaExchangeMethod:
     """
     This class is for generation of samples from 
     one dimentional gaussian mixture distribution
     """
-    def __init__(self, epsilon, mu_list, sigma, NMCS, e_freq, num_chain):
+    def __init__(self, f_prob, epsilon, x_min, x_max, NMCS, e_freq, num_chain):
+        self.f_prob = f_prob
         self.epsilon = epsilon
-        self.mu_list = mu_list
-        self.sigma = sigma
+        self.x_min, self.x_max = x_min, x_max
         self.NMCS = NMCS
         self.e_freq = e_freq
         self.num_chain = num_chain
+        self.beta_list = [i/(num_chain-1) for i in range(num_chain)]
 
     def judgeacceptornot(self, x, new_x, f):
         judge = f(new_x) > f(x)
         r = f(new_x) / f(x)
         return judge, r
 
+    def make_energy_func(self):
+        def energy(x):
+            return -np.log(self.f_prob(x))
+        return energy
+
+    def make_likelihood(self, beta):
+        def likelihood(x):
+            temp = beta*np.log(self.f_prob(x))
+            return np.exp(temp)
+        return likelihood
+
     def loop(self):
-        mu_min = min(self.mu_list)
-        mu_max = max(self.mu_list)
-        self.x_list = [[np.random.uniform(mu_min, mu_max)] for i in range(self.num_chain)]
-        center = (mu_min+mu_max)/2
-        dis = (mu_max - center)/self.num_chain
-        temp = [np.linspace(center-dis*i, center+dis*i, len(self.mu_list)) for i in range(1,self.num_chain+1)]
-        distributions = [generate_gm(mu_list_temp, self.sigma) for mu_list_temp in temp]
+        self.x_list = [[np.random.uniform(self.x_min, self.x_max)] for i in range(self.num_chain)]
+        distributions = [self.make_likelihood(beta) for beta in self.beta_list]
         
         for i in range(self.NMCS):
             for i, x in enumerate(self.x_list):
@@ -89,7 +119,7 @@ class ReplicaExchangeMethod:
                 self.x_list[i].append(x)
             
             if i %self.e_freq == 0:
-                index = int(np.random.uniform(0,len(self.mu_list)-1))
+                index = int(np.random.uniform(0,len(self.x_list)-1))
                 x0 = self.x_list[index][-1]
                 x1 = self.x_list[index+1][-1]
                 dist0 = distributions[index]
@@ -103,12 +133,12 @@ class ReplicaExchangeMethod:
         fig, ax1 = plt.subplots()
         ax1.hist(self.x_list[-1], density=True, bins=40)
         ax2 = ax1.twinx()
-        ax2.plot(theta, generate_gm(self.mu_list, self.sigma)(theta))
+        ax2.plot(theta, self.f_prob(theta))
         plt.show()
 
         # for i in range(len(self.x_list)):
         #     plt.figure()
-        #     plt.hist(self.x_list[i], alpha=0.5, label=str(i))
+        #     plt.hist(self.x_list[i], alpha=0.5, label=str(i), bins=40)
         #     plt.legend()
         #     plt.show()
 
@@ -179,21 +209,6 @@ class HamiltonianMonteCarlo:
         ax2.plot(theta, self.f(theta))
         plt.show()
 
-def f_gamma(theta):
-    lam = 1
-    alpha = 11
-    return np.exp(-lam*theta)*theta**(alpha-1)
-
-def h_gamma(theta):
-    lam = 1
-    alpha = 11
-    return lam*theta - (alpha-1)*np.log(theta)
-
-def dhdtheta_gamma(theta):
-    lam = 1
-    alpha = 11
-    return lam - (alpha-1)/theta
-
 if __name__ == '__main__':
 #     f = f_gamma
 #     h = h_gamma
@@ -217,13 +232,18 @@ if __name__ == '__main__':
 #     temp = MetropolisHastings(epsilon=epsilon, theta=theta, NMCS=T*L, f=f)
 #     temp.loop()
 #     temp.plot()
+
     epsilon = 0.3
-    mu_list = [-3,3]
+    mu_list = [-3, 3]
     e_freq = 100
     sigma = 1
     NMCS = 100000
-    num_chain = 5
-    re_ex = ReplicaExchangeMethod(epsilon, mu_list, sigma, NMCS, e_freq, num_chain)
+    num_chain = 10
+    x_min = min(mu_list)
+    x_max = max(mu_list)
+    f_prob = generate_gm(mu_list, sigma)
+    
+    re_ex = ReplicaExchangeMethod(f_prob, epsilon, x_min, x_max, NMCS, e_freq, num_chain)
     re_ex.loop()
     re_ex.plot()
 
