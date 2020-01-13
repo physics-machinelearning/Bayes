@@ -153,16 +153,5 @@ class GPRegression:
         plt.fill_between(self.x_test, y_test_predict_max, y_test_predict_min, alpha=0.5)
         plt.show()
 
-if __name__ == '__main__':
-    xmin = 0
-    xmax = 4
-    noise_level = 0.2
-    train_data = DataSet(xmin, xmax, num_data=50, noise_level=noise_level)
-    test_data = DataSet(xmin, xmax, num_data=1000, noise_level=noise_level)
-
-    # x_train, x_test, x, y_train, y_test = generate_data()
-    # gp = GPRegression(x_train, x, y_train)
-    gp = GPRegression(train_data.x, test_data.x, train_data.y)
-    gp.plot()
 
 

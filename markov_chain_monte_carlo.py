@@ -209,43 +209,6 @@ class HamiltonianMonteCarlo:
         ax2.plot(theta, self.f(theta))
         plt.show()
 
-if __name__ == '__main__':
-#     f = f_gamma
-#     h = h_gamma
-#     dhdtheta = dhdtheta_gamma
-
-#     # HMC
-#     epsilon = 0.01
-#     T = 10000
-#     L = 100
-#     theta = 3.0
-
-#     temp = HamiltonianMonteCarlo(epsilon=epsilon, T=T, L=L, theta=theta, \
-#     f=f, h=h, dhdtheta=dhdtheta)
-#     temp.loop()
-#     temp.plot()
-
-#     # MH
-#     theta = 10
-#     epsilon = 0.3
-
-#     temp = MetropolisHastings(epsilon=epsilon, theta=theta, NMCS=T*L, f=f)
-#     temp.loop()
-#     temp.plot()
-
-    epsilon = 0.3
-    mu_list = [-3, 3]
-    e_freq = 100
-    sigma = 1
-    NMCS = 100000
-    num_chain = 10
-    x_min = min(mu_list)
-    x_max = max(mu_list)
-    f_prob = generate_gm(mu_list, sigma)
-    
-    re_ex = ReplicaExchangeMethod(f_prob, epsilon, x_min, x_max, NMCS, e_freq, num_chain)
-    re_ex.loop()
-    re_ex.plot()
 
 
             
