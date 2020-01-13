@@ -1,5 +1,5 @@
 # Code related to Bayes
-Code related to sampling, gaussian process and so on
+Code related to MCMC sampling and gaussian process
 
 ## Description
 - gaussian_process.py - Code for gaussian process regression
